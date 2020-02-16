@@ -5,9 +5,7 @@ import glob
 def sift_detector(new_image, image_template):
     image1 = cv2.cvtColor(new_image, cv2.COLOR_BGR2GRAY)
     image2 = image_template
-
-
-    sift = cv2.xfeatures2d.SIFT_create()
+ 
 
     FLANN_INDEX_KDTREE = 0
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 3)
@@ -18,11 +16,8 @@ def sift_detector(new_image, image_template):
     match=[]
 
     keypoints_1, descriptors_1 = sift.detectAndCompute(image1, None)
-    for image in image2:
-        i=cv2.imread(image)
-        keypoints_2, descriptors_2 = sift.detectAndCompute(i, None)
-
-        matches = flann.knnMatch(descriptors_1, descriptors_2, k=2)
+    for des in image2:
+        matches = flann.knnMatch(descriptors_1, des, k=2)
         good_matches = []
         for m,n in matches:
             if m.distance < 0.7 * n.distance:
@@ -36,6 +31,13 @@ cap = cv2.VideoCapture(0)
 path = 'C:/Users/Ankit/Desktop/major project/database/asl_alphabet_test/asl_alphabet_test/*.jpg'
 
 image_template=glob.glob(path)
+desc=[]
+sift = cv2.xfeatures2d.SIFT_create()
+for image in image_template:
+        i=cv2.imread(image)
+        keypoints_2, descriptors_2 = sift.detectAndCompute(i, None)
+        desc.append(descriptors_2)
+
 while True:
 
     ret, frame = cap.read()
@@ -53,9 +55,9 @@ while True:
 
     frame = cv2.flip(frame,1)
 
-    matches, alphabet_index = sift_detector(cropped, image_template)
+    matches, alphabet_index = sift_detector(cropped, desc)
 
-    cv2.putText(frame,str(matches),(450,450), cv2.FONT_HERSHEY_COMPLEX, 2,(0,255,0),1)
+   # cv2.putText(frame,str(matches),(450,450), cv2.FONT_HERSHEY_COMPLEX, 2,(0,255,0),1)
 
     threshold = 10
 
@@ -63,7 +65,7 @@ while True:
         alphabet= 65+alphabet_index
         cv2.rectangle(frame, (top_left_x,top_left_y), (bottom_right_x,bottom_right_y), (0,255,0), 3)
         cv2.putText(frame,chr(alphabet),(50,50), cv2.FONT_HERSHEY_COMPLEX, 2 ,(0,255,0), 2)
-    cv2.imshow('Sign detection using SIFT', frame)
+    cv2.imshow('Sign detection ', frame)
     if cv2.waitKey(1) == 13: #13 is the Enter Key
         break
 
